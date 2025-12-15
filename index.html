@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Mood Control Log</title>
+    <title>每日状态轻记录：重建自我连接 💖</title>
     <style>
-        /* 样式优化：更柔和的配色、圆角、阴影 */
+        /* 样式优化：更柔和的配色、圆角、阴影 (保持不变) */
         body { font-family: 'Arial', 'Microsoft YaHei', sans-serif; line-height: 1.6; max-width: 880px; margin: 25px auto; padding: 0 18px; background-color: #f0f2f5; }
         h2 { border-bottom: 3px solid #b3cde0; padding-bottom: 8px; color: #1e3a8a; text-align: center; margin-bottom: 22px; }
         h3 { color: #1f4b99; margin-top: 22px; border-left: 5px solid #4f8ef5; padding-left: 10px; }
@@ -17,7 +17,7 @@
         input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus, input[type="time"]:focus, textarea:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
         input[type="date"], input[type="time"] { max-width: 220px; padding: 8px; }
         textarea { width: 100%; min-height: 52px; padding: 8px 9px; border: 1px solid #c5ccd6; border-radius: 6px; box-sizing: border-box; resize: vertical; font-family: inherit; white-space: pre-wrap; word-break: break-word; line-height: 1.35; }
-        /* 禁用状态的样式 */
+        /* 禁用状态的样式 (保持不变) */
         input[disabled], textarea[disabled], input[type="range"][disabled] {
             cursor: not-allowed;
             background-color: #f7f7f7 !important;
@@ -33,10 +33,20 @@
         .mobile-hint { display: none; color: #6b7280; font-size: 0.9em; margin-top: 4px; }
         .note { font-size: 0.9em; color: #5f6673; margin-top: 5px; display: block; }
         .mindset { background-color: #dbeafe; border-left: 5px solid #1e3a8a; padding: 15px; margin-top: 20px; border-radius: 5px; }
-        .mindset p { margin: 5px 0; color: #1e3a8a; }
+        
+        /* 记录心法文字缩小 */
+        .mindset p { margin: 5px 0; color: #1e3a8a; font-size: 0.9em; } 
+        
         .mindset strong { font-size: 1.1em; }
         .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 6px; }
-        .date-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+        .date-row { 
+            display: flex; 
+            flex-wrap: wrap; 
+            align-items: center; 
+            gap: 10px; 
+            /* 修正对齐的容器 */
+            margin-bottom: 4px; /* 调整间距 */
+        }
         .date-status { font-size: 0.9em; color: #374151; }
         .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; background-color: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95em; box-shadow: 0 3px 8px rgba(37, 99, 235, 0.25); transition: transform 0.1s ease, background-color 0.2s; }
         .btn:hover { background-color: #1d4ed8; }
@@ -45,7 +55,23 @@
         .btn.secondary { background-color: #6b7280; box-shadow: 0 3px 8px rgba(107, 114, 128, 0.25); }
         .btn.secondary:hover { background-color: #4b5563; }
         .btn.secondary:disabled { background-color: #9ca3af; }
-        .inline-hint { font-size: 0.9em; color: #4b5563; margin-top: 4px; }
+        
+        /* 新增样式：确保最近保存时间单独占一行 */
+        .last-save-display { 
+            font-size: 0.9em; 
+            color: #4b5563; 
+            margin: 4px 0 8px 0; /* 在说明文字上方留出间距 */
+        }
+        .last-save-time { /* 更具体的样式应用于时间文本 */
+            font-weight: 600; 
+            color: #1e3a8a;
+        }
+
+        .inline-hint { 
+            font-size: 0.9em; 
+            color: #4b5563; 
+            margin-top: 0; /* 确保紧接在上方保存时间行之后 */
+        }
         .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 10px; }
         .metric { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; background: #f9fafb; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
         .metric-label { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #1e3a8a; }
@@ -59,10 +85,9 @@
         .btn.ghost:disabled { background-color: #e5e7eb; color: #9ca3af; }
         .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: rgba(31,41,55,0.9); color: #fff; padding: 10px 14px; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.18); font-size: 0.95em; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; z-index: 9999; }
         .toast.show { opacity: 1; }
-        .last-save { font-size: 0.9em; color: #4b5563; margin-left: 8px; }
         h4 { margin: 10px 0 6px; }
         .note { margin-top: 2px; }
-        /* 评分滑块样式 - 仅保留 1 和 10 标签 */
+        /* 评分滑块样式 - 仅保留 1 和 10 标签 (保持不变) */
         .rating-labels { display: flex; justify-content: space-between; font-size: 0.9em; color: #6b7280; padding: 0 2px; margin-top: 2px; font-weight: bold; }
         .rating-value { font-weight: 700; color: #1e3a8a; text-align: center; margin-top: 4px; font-size: 1.1em; }
         input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: #e0e7ff; border-radius: 5px; transition: opacity .2s; cursor: pointer; }
@@ -70,7 +95,7 @@
         input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #4f8ef5; cursor: pointer; border: 2px solid #ffffff; box-shadow: 0 0 4px rgba(0, 0, 0, 0.15); }
         input[type="range"][disabled]::-webkit-slider-thumb { background: #aeb5c2 !important; }
 
-        /* 图表样式 */
+        /* 图表样式 (保持不变) */
         #chart-container {
             display: flex;
             justify-content: space-around;
@@ -162,13 +187,13 @@
 </head>
 <body>
 
-    <h2>✨ 每日情绪与掌控感记录 ✨</h2>
+    <h2>💫 每日状态轻记录：重建自我连接 💖</h2>
 
     <div class="section mindset">
-        <h3>💡 记录心法：自我呵护指南</h3>
-        <p>1. 降低门槛：任何一点记录都比完全放弃要好。如果今天很累，只写下 A1/A2 评分 或 B1 最开心的事 即可。</p>
-        <p>2. 不带评判：记录的目的是“看见”（客观了解状态），而不是“审判”（指责自己）。请允许所有感受的存在。</p>
-        <p>3. 保持好奇：用观察者的心态去记录，去了解自己的规律和起伏。</p>
+        <h3>🔑 坚持的诀窍：越简单越好</h3>
+        <p>1. 固定时间：建议您在睡前（回顾一天）或早晨（规划和回顾昨晚），选择一个固定时间来做记录，形成习惯。</p>
+        <p>2. 极简原则：如果今天你感觉特别累，只记录 情绪和能量评分 或 最开心的事 即可。任何一点记录都比完全放弃要好。</p>
+        <p>3. 不带评判：记录时不要评判自己“今天又没完成任务”、“今天的消费太高了”。记录的目的是“看见”（客观了解状态），而不是“审判”（指责自己）。</p>
     </div>
 
     <div class="section">
@@ -181,17 +206,17 @@
             <button class="btn ghost" id="goto-today" type="button">回到今天</button>
             <button class="btn ghost" id="clear-day" type="button">清空当前</button>
             <span class="date-status" id="date-status"></span>
-            <span class="last-save" id="last-save"></span>
         </div>
-        <div class="inline-hint">默认填入今天，切换日期即可查看/填写历史记录。</div>
+        <p class="last-save-display"><span id="last-save" class="last-save-time"></span></p>
+        <div class="inline-hint">默认填入今天。切换日期即可查看/填写历史记录。系统禁止填写未来日期，减轻您的“预设”压力。</div>
     </div>
 
     <div class="section">
-        <h3>I. 状态量化与觉察 (滑块优化)</h3>
+        <h3>I. 当下感受的捕捉</h3>
         <div class="metrics">
             <div class="metric">
                 <div class="metric-label">情绪评分 (1-10)</div>
-                <div class="metric-body">今晚回顾时的总体情绪，1=极度低落，10=极度兴奋。</div>
+                <div class="metric-body">此刻的总体感受是什么？1=非常低落，5=平静/中性，10=非常快乐</div>
                 <div class="rating-value" id="mood-value">5</div>
                 <input type="range" min="1" max="10" step="1" value="5" class="metric-score" name="mood" id="mood-range" aria-label="情绪评分">
                 <div class="rating-labels">
@@ -201,7 +226,7 @@
             </div>
             <div class="metric">
                 <div class="metric-label">能量评分 (1-10)</div>
-                <div class="metric-body">今晚回顾时的身体精力，1=疲惫无力，10=充满活力。</div>
+                <div class="metric-body">此刻身体感受到的精力如何？1=疲惫无力，5=正常/平稳，10=充满活力</div>
                 <div class="rating-value" id="energy-value">5</div>
                 <input type="range" min="1" max="10" step="1" value="5" class="metric-score" name="energy" id="energy-range" aria-label="能量评分">
                 <div class="rating-labels">
@@ -210,12 +235,12 @@
                 </div>
             </div>
             <div class="metric">
-                <div class="metric-label">睡眠记录 (原生时间输入)</div>
-                <div class="metric-body">记录昨晚的入睡与醒来时间。</div>
+                <div class="metric-label">睡眠记录</div>
+                <div class="metric-body">必记项，即使是失眠到凌晨4点也要如实记录</div>
                 <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
-                    <span>入睡：</span>
+                    <span>入睡时间：</span>
                     <input type="time" name="sleepStart" aria-label="入睡时间">
-                    <span>醒来：</span>
+                    <span>醒来时间：</span>
                     <input type="time" name="sleepEnd" aria-label="醒来时间">
                 </div>
             </div>
@@ -223,55 +248,60 @@
     </div>
 
     <div class="section">
-        <h3>II. 积极捕捉与掌控 (行动聚焦)</h3>
+        <h3>II. 值得被看见的美好与小胜利</h3>
+        
         <h4>B1. 今日最开心的三件事</h4>
-        <div class="note">（积极心理学练习：训练大脑寻找美好，越具体越好。）</div>
+        <div class="note">不一定要是“大事”，越具体越好。积极心理学练习，训练大脑去寻找美好</div>
         <div class="inline-row"><span class="inline-label">1.</span><textarea name="happy1" rows="2" placeholder="例如：阳光洒在身上很舒服" aria-label="最开心的事1"></textarea></div>
         <div class="inline-row"><span class="inline-label">2.</span><textarea name="happy2" rows="2" placeholder="例如：喝到一杯好咖啡" aria-label="最开心的事2"></textarea></div>
         <div class="inline-row"><span class="inline-label">3.</span><textarea name="happy3" rows="2" placeholder="例如：看到一个有趣的表情包" aria-label="最开心的事3"></textarea></div>
 
-        <h4>B2. 今日的掌控感与自爱行动</h4>
-        <div class="inline-row">
-            <span class="inline-label">完成的具体行动：</span>
-            <textarea name="action" rows="2" placeholder="例如：我为面试准备了 1 小时 / 我按时吃了午饭" aria-label="完成的具体行动"></textarea>
-        </div>
-        <div class="inline-row">
-            <span class="inline-label">今日的自爱行动：</span>
-            <textarea name="selflove" rows="2" placeholder="例如：我没有熬夜，11点前躺下 / 我给皮肤涂了乳液" aria-label="今日的自爱行动"></textarea>
-        </div>
+        <h4>B2. 今日的掌控感</h4>
+        <div class="note">记录一件您主动完成的事情，增强对自我行动的肯定</div>
+        <textarea name="action" rows="2" placeholder="例如：我按时吃了午饭、我坚持运动了10分钟、我为面试准备了1个小时、我把昨天的旧邮件清理了" aria-label="今日的掌控感"></textarea>
+
+        <h4>B3. 今日的自爱行动</h4>
+        <div class="note">记录一个您为自己身体或心理健康做出的行动，关注自我需求，打破拖延导致的自我惩罚</div>
+        <textarea name="selflove" rows="2" placeholder="例如：我没有熬夜，在11点前躺下了、我给皮肤涂了乳液、我听了30分钟的放松音乐" aria-label="今日的自爱行动"></textarea>
+
     </div>
 
     <div class="section">
-        <h3>III. 觉察与反思 (深层探索)</h3>
-        <h4>C1. 情绪/压力触发点</h4>
-        <div class="note"><strong>⚠️ 重点：</strong> 如果情绪评分低于 5 分，请记录导致情绪下滑的事件、想法或身体感受。</div>
+        <h3>III. 仅仅是观察与了解</h3>
+        
+        <h4>C1. 情绪触发点</h4>
+        <div class="note">如果今天情绪分低于 5 分，记录发生了一件什么事，或脑海里突然冒出了什么想法，导致情绪下滑，找出引起低落或焦虑的具体事件</div>
         <textarea name="trigger" placeholder="例如：面试官的一个问题让我觉得自己能力很差，突然开始否定自己。" aria-label="情绪压力触发点"></textarea>
 
-        <h4>C2. 今日消费速览 (控制感辅助)</h4>
-        <p><strong>总额：</strong> ¥ <input name="spendTotal" type="number" step="0.01" min="0" placeholder="例如：128.5" aria-label="今日消费总额"></p>
+        <h4>C2. 自救行为</h4>
+        <div class="note">您做了什么来阻止情绪进一步恶化？请记录自己如何从低落中自救</div>
+        <textarea name="rescue" rows="2" placeholder="例如：我向朋友倾诉了、我停止了思考，去看了一部电影、我出去散步了10分钟。" aria-label="自救行为"></textarea>
+        
+        <h4>C3. 今日消费速览</h4>
+        <p><strong>消费总额：</strong> ¥ <input name="spendTotal" type="number" step="0.01" min="0" placeholder="例如：128.5" aria-label="今日消费总额"></p>
         <div class="inline-row">
-            <span class="inline-label">情绪性消费 (如果有)：</span>
-            <textarea name="spendEmo" placeholder="因焦虑/无聊而买的东西，例如：奶茶、零食" aria-label="情绪性消费" rows="2"></textarea>
+            <span class="inline-label">情绪性消费：</span>
+            <textarea name="spendEmo" placeholder="记录是否因为焦虑/无聊/低落而买了东西。写下：买的是什么，以及购买时的情绪" aria-label="情绪性消费" rows="2"></textarea>
         </div>
         <div class="inline-row">
-            <span class="inline-label">今日的“价值消费”：</span>
-            <textarea name="spendValue" placeholder="对未来或重要需求有帮助的消费，例如：面试正装、好书、在线课程" aria-label="价值消费" rows="2"></textarea>
+            <span class="inline-label">价值消费：</span>
+            <textarea name="spendValue" placeholder="记录一笔您觉得“很值”或“对未来有帮助”的消费。例如：购买了面试正装、购买了一本好书、付了健身卡费用" aria-label="价值消费" rows="2"></textarea>
         </div>
     </div>
 
     <div class="section">
-        <h3>IV. 明日展望 (减少拖延)</h3>
+        <h3>IV. 给明天的自己留下三个“小礼物”</h3>
         <h4>D. 明天只需完成的 3 件小事</h4>
-        <div class="note">（只列出三件**必须完成**且**具体可执行**的小任务，避免过度压力。）</div>
+        <div class="note">只列出三件必须完成且具体可执行的小任务，将明天的压力分解，避免过度拖延。</div>
         <div class="inline-row"><span class="inline-label">1.</span><textarea name="todo1" rows="2" maxlength="120" placeholder="例如：发送简历到公司A" aria-label="明日任务1"></textarea></div>
         <div class="inline-row"><span class="inline-label">2.</span><textarea name="todo2" rows="2" maxlength="120" placeholder="例如：给妈妈打电话" aria-label="明日任务2"></textarea></div>
         <div class="inline-row"><span class="inline-label">3.</span><textarea name="todo3" rows="2" maxlength="120" placeholder="例如：洗干净昨天堆积的衣服" aria-label="明日任务3"></textarea></div>
-        <div class="inline-hint">建议写“动词 + 对象 + 时间/数量”，便于执行。</div>
+        <div class="inline-hint">为了让行动更容易被完成，建议使用“动词 + 对象 + 时间/数量”的描述方式。</div>
     </div>
 
     <div class="section">
         <h3>V. 数据总览 (最近 7 天评分趋势 - 柱状图)</h3>
-        <div class="note">图表展示最近 7 个**有记录日期**的情绪和能量趋势（日期从左到右，从旧到新）。</div>
+        <div class="note">最近7个有记录日期的情绪和能量趋势</div>
         <div id="chart-container">
             </div>
         <div class="note" style="margin-top: 15px;">情绪评分：蓝色柱 / 能量评分：绿色柱</div>
@@ -287,12 +317,13 @@
 
     <script>
         // --- 核心变量与初始化 ---
+        // 重新定义 fields 以确保包含新的 'rescue' 字段
         const fields = Array.from(document.querySelectorAll('input, textarea, select')).filter(el => el.name && el.name !== 'date');
         const storageKey = 'daily-record-v2';
         const dateInput = document.getElementById('date');
         const dateStatus = document.getElementById('date-status');
-        const nextDayBtn = document.getElementById('next-day'); // 新增：后一天按钮
-        const clearDayBtn = document.getElementById('clear-day'); // 新增：清空按钮
+        const nextDayBtn = document.getElementById('next-day'); 
+        const clearDayBtn = document.getElementById('clear-day'); 
         const toastEl = document.getElementById('toast');
         const lastSaveEl = document.getElementById('last-save');
         let lastDate = '';
@@ -378,11 +409,11 @@
 
             // 2. 禁用/启用导航按钮和清空按钮
             if (nextDayBtn) {
-                // 如果是今天，禁用“后一天”按钮
+                // 如果是今天或未来日期，禁用“后一天”按钮
                 nextDayBtn.disabled = isToday || isFuture;
             }
             if (clearDayBtn) {
-                // 未来日期也不能清空（因为它本身就是空的）
+                // 未来日期不能清空（因为它本身就是空的）
                 clearDayBtn.disabled = isFuture;
             }
 
@@ -428,7 +459,13 @@
 
             const store = readStore();
             const payload = {};
-            fields.forEach(el => payload[el.name] = el.value);
+            // 只有当字段没有被禁用时才尝试获取其值
+            fields.forEach(el => {
+                // 此处逻辑与 checkFutureDateAndDisable 中的 fields.forEach 配合，确保只保存当前日期或过去日期的有效数据
+                if (!el.disabled) { 
+                    payload[el.name] = el.value;
+                }
+            });
             payload.date = targetDate;
             payload.updatedAt = Date.now();
             store[targetDate] = payload;
@@ -459,7 +496,9 @@
 
         const clearCurrent = () => {
             const current = getCurrentDate();
-            if (!current || isFutureDate(current)) return; // 阻止清空未来日期
+            if (!current || isFutureDate(current)) return; 
+            
+            if (!confirm(`确定要清空 ${current} 的所有数据吗？此操作不可撤销。`)) return;
             
             const store = readStore();
             delete store[current];
@@ -467,25 +506,31 @@
             clearFields();
             updateStatus(current, false, undefined);
             generateSummaryChart(store);
-            showToast('已清空当前日期');
+            showToast('已清空当前日期数据');
         };
 
+        // 修正 2: 更新时间格式，包含年月日和时间
         const updateStatus = (date, hasData, updatedAt) => {
             if (!dateStatus) return;
             dateStatus.textContent = hasData ? `已加载：${date}` : `当前日期暂无记录：${date}`;
             if (lastSaveEl) {
                 if (updatedAt) {
                     const d = new Date(updatedAt);
+                    const YYYY = d.getFullYear();
+                    const MM = String(d.getMonth() + 1).padStart(2, '0');
+                    const DD = String(d.getDate()).padStart(2, '0');
                     const hh = String(d.getHours()).padStart(2, '0');
                     const mm = String(d.getMinutes()).padStart(2, '0');
-                    lastSaveEl.textContent = `最近保存：${hh}:${mm}`;
+                    
+                    // 修正：包含年月日和时间
+                    lastSaveEl.textContent = `最近保存：${YYYY}-${MM}-${DD} ${hh}:${mm}`;
                 } else {
                     lastSaveEl.textContent = '';
                 }
             }
         };
 
-        // --- 数据总览图表生成 (保持不变，已含标注) ---
+        // --- 数据总览图表生成 (保持不变) ---
         const generateSummaryChart = (store) => {
             const chartContainer = document.getElementById('chart-container');
             if (!chartContainer) return;
@@ -572,7 +617,7 @@
             });
         };
         
-        // --- 导出逻辑 (保持不变) ---
+        // --- 导出逻辑 (已修正文本) ---
         const downloadFile = (filename, content) => {
             const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
@@ -598,14 +643,22 @@
                 `2. ${get('happy2')}`,
                 `3. ${get('happy3')}`,
                 ``,
-                `## 掌控感与自爱行动`,
-                `- 完成的行动: ${get('action')}`,
-                `- 自爱行动: ${get('selflove')}`,
+                // 文本修改 2: 今日的掌控感
+                `## 今日的掌控感`, 
+                `${get('action')}`,
                 ``,
-                `## 情绪/压力触发点`,
+                // 文本修改 3: 今日的自爱行动
+                `## 今日的自爱行动`, 
+                `${get('selflove')}`,
+                ``,
+                // 文本修改 4: 情绪触发点
+                `## 情绪触发点`, 
                 `${get('trigger')}`,
                 ``,
-                `## 消费速览`,
+                `## 自救行为`, 
+                `${get('rescue')}`,
+                ``,
+                `## 消费速览`, 
                 `- 总额: ${get('spendTotal')}`,
                 `- 情绪性消费: ${get('spendEmo')}`,
                 `- 价值消费: ${get('spendValue')}`,
@@ -632,13 +685,22 @@
                 `2) ${get('happy2')}`,
                 `3) ${get('happy3')}`,
                 ``,
-                `完成的具体行动: ${get('action')}`,
-                `自爱行动: ${get('selflove')}`,
+                // 文本修改 2: 今日的掌控感
+                `今日的掌控感:`, 
+                `${get('action')}`,
                 ``,
-                `情绪/压力触发点:`,
+                // 文本修改 3: 今日的自爱行动
+                `今日的自爱行动:`, 
+                `${get('selflove')}`,
+                ``,
+                // 文本修改 4: 情绪触发点
+                `情绪触发点:`, 
                 `${get('trigger')}`,
                 ``,
-                `消费速览:`,
+                `自救行为:`, 
+                `${get('rescue')}`,
+                ``,
+                `消费速览:`, 
                 `总额: ${get('spendTotal')}`,
                 `情绪性消费: ${get('spendEmo')}`,
                 `价值消费: ${get('spendValue')}`,
