@@ -176,6 +176,27 @@
         }
 
         @media (max-width: 640px) {
+            /* 移动端优化 */
+            body { 
+                font-size: 15px; /* 将基础字体略微缩小 */
+                padding: 0 12px; /* 减小两侧边距 */
+            }
+            h2 { 
+                font-size: 1.25em; /* 进一步缩小标题字体 */
+                white-space: nowrap; /* 强制不换行 */
+                overflow: hidden; /* 隐藏超出部分 */
+                text-overflow: ellipsis; /* 防止宽度不足时出现水平滚动条 */
+                margin-bottom: 16px; 
+            }
+            h3 { 
+                font-size: 1.1em; /* 二级标题略微缩小 */
+            }
+            .metric-body {
+                font-size: 0.9em; /* 评分说明文字缩小 */
+            }
+            .btn, input, textarea {
+                font-size: 0.9em; /* 按钮和输入框的字体大小缩小 */
+            }
             .metrics { grid-template-columns: 1fr; }
             .mobile-hint { display: block; }
             #chart-container { padding-left: 15px; height: 120px; }
@@ -250,17 +271,17 @@
     <div class="section">
         <h3>II. 值得被看见的美好与小胜利</h3>
         
-        <h4>B1. 今日最开心的三件事</h4>
+        <h4>今日最开心的三件事</h4>
         <div class="note">不一定要是“大事”，越具体越好。积极心理学练习，训练大脑去寻找美好</div>
         <div class="inline-row"><span class="inline-label">1.</span><textarea name="happy1" rows="2" placeholder="例如：阳光洒在身上很舒服" aria-label="最开心的事1"></textarea></div>
         <div class="inline-row"><span class="inline-label">2.</span><textarea name="happy2" rows="2" placeholder="例如：喝到一杯好咖啡" aria-label="最开心的事2"></textarea></div>
         <div class="inline-row"><span class="inline-label">3.</span><textarea name="happy3" rows="2" placeholder="例如：看到一个有趣的表情包" aria-label="最开心的事3"></textarea></div>
 
-        <h4>B2. 今日的掌控感</h4>
+        <h4>今日的掌控感</h4>
         <div class="note">记录一件您主动完成的事情，增强对自我行动的肯定</div>
         <textarea name="action" rows="2" placeholder="例如：我按时吃了午饭、我坚持运动了10分钟、我为面试准备了1个小时、我把昨天的旧邮件清理了" aria-label="今日的掌控感"></textarea>
 
-        <h4>B3. 今日的自爱行动</h4>
+        <h4>今日的自爱行动</h4>
         <div class="note">记录一个您为自己身体或心理健康做出的行动，关注自我需求，打破拖延导致的自我惩罚</div>
         <textarea name="selflove" rows="2" placeholder="例如：我没有熬夜，在11点前躺下了、我给皮肤涂了乳液、我听了30分钟的放松音乐" aria-label="今日的自爱行动"></textarea>
 
@@ -269,29 +290,30 @@
     <div class="section">
         <h3>III. 仅仅是观察与了解</h3>
         
-        <h4>C1. 情绪触发点</h4>
+        <h4>情绪触发点</h4>
         <div class="note">如果今天情绪分低于 5 分，记录发生了一件什么事，或脑海里突然冒出了什么想法，导致情绪下滑，找出引起低落或焦虑的具体事件</div>
         <textarea name="trigger" placeholder="例如：面试官的一个问题让我觉得自己能力很差，突然开始否定自己。" aria-label="情绪压力触发点"></textarea>
 
-        <h4>C2. 自救行为</h4>
+        <h4>自救行为</h4>
         <div class="note">您做了什么来阻止情绪进一步恶化？请记录自己如何从低落中自救</div>
         <textarea name="rescue" rows="2" placeholder="例如：我向朋友倾诉了、我停止了思考，去看了一部电影、我出去散步了10分钟。" aria-label="自救行为"></textarea>
         
-        <h4>C3. 今日消费速览</h4>
+        
+        <h4>今日消费速览</h4>
         <p><strong>消费总额：</strong> ¥ <input name="spendTotal" type="number" step="0.01" min="0" placeholder="例如：128.5" aria-label="今日消费总额"></p>
-        <div class="inline-row">
-            <span class="inline-label">情绪性消费：</span>
-            <textarea name="spendEmo" placeholder="记录是否因为焦虑/无聊/低落而买了东西。写下：买的是什么，以及购买时的情绪" aria-label="情绪性消费" rows="2"></textarea>
+        
+        <h4>情绪性消费</h4>
+        <div class="note">记录是否因焦虑/无聊/低落而买了东西，觉察自己是否用消费来应对情绪</div>
+        <textarea name="spendEmo" rows="2" placeholder="买的是什么，以及购买时的情绪" aria-label="情绪性消费"></textarea>
+
+        <h4>投资性消费</h4>
+        <div class="note">记录一笔您觉得“很值”或“对未来有帮助”的消费，区分投资消费与情绪消费</div>
+        <textarea name="spendValue" rows="2" placeholder="例如：购买了面试正装、购买了一本好书、付了健身卡费用" aria-label="投资性消费"></textarea>
         </div>
-        <div class="inline-row">
-            <span class="inline-label">价值消费：</span>
-            <textarea name="spendValue" placeholder="记录一笔您觉得“很值”或“对未来有帮助”的消费。例如：购买了面试正装、购买了一本好书、付了健身卡费用" aria-label="价值消费" rows="2"></textarea>
-        </div>
-    </div>
 
     <div class="section">
-        <h3>IV. 给明天的自己留下三个“小礼物”</h3>
-        <h4>D. 明天只需完成的 3 件小事</h4>
+        <h3>IV. 给明天的自己</h3>
+        <h4>明天只需完成的 3 件小事</h4>
         <div class="note">只列出三件必须完成且具体可执行的小任务，将明天的压力分解，避免过度拖延。</div>
         <div class="inline-row"><span class="inline-label">1.</span><textarea name="todo1" rows="2" maxlength="120" placeholder="例如：发送简历到公司A" aria-label="明日任务1"></textarea></div>
         <div class="inline-row"><span class="inline-label">2.</span><textarea name="todo2" rows="2" maxlength="120" placeholder="例如：给妈妈打电话" aria-label="明日任务2"></textarea></div>
@@ -300,7 +322,7 @@
     </div>
 
     <div class="section">
-        <h3>V. 数据总览 (最近 7 天评分趋势 - 柱状图)</h3>
+        <h3>V. 最近 7 天心情</h3>
         <div class="note">最近7个有记录日期的情绪和能量趋势</div>
         <div id="chart-container">
             </div>
@@ -660,8 +682,9 @@
                 ``,
                 `## 消费速览`, 
                 `- 总额: ${get('spendTotal')}`,
+                // 导出文本已更新为“投资性消费”
                 `- 情绪性消费: ${get('spendEmo')}`,
-                `- 价值消费: ${get('spendValue')}`,
+                `- 投资性消费: ${get('spendValue')}`, 
                 ``,
                 `## 明天三件小事`,
                 `1. ${get('todo1')}`,
@@ -702,8 +725,9 @@
                 ``,
                 `消费速览:`, 
                 `总额: ${get('spendTotal')}`,
+                // 导出文本已更新为“投资性消费”
                 `情绪性消费: ${get('spendEmo')}`,
-                `价值消费: ${get('spendValue')}`,
+                `投资性消费: ${get('spendValue')}`,
                 ``,
                 `明天三件小事:`,
                 `1) ${get('todo1')}`,
