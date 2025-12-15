@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>每日情绪与掌控感记录 (最终版 - 终极改进)</title>
+    <style>
+        /* 样式优化：更柔和的配色、圆角、阴影 */
+        body { font-family: 'Arial', 'Microsoft YaHei', sans-serif; line-height: 1.6; max-width: 880px; margin: 25px auto; padding: 0 18px; background-color: #f0f2f5; }
+        h2 { border-bottom: 3px solid #b3cde0; padding-bottom: 8px; color: #1e3a8a; text-align: center; margin-bottom: 22px; }
+        h3 { color: #1f4b99; margin-top: 22px; border-left: 5px solid #4f8ef5; padding-left: 10px; }
+        .section { margin-bottom: 26px; padding: 18px; border: 1px solid #d7dce3; background-color: #ffffff; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { border: 1px solid #e5e7eb; padding: 10px; text-align: left; vertical-align: top; }
+        th { background-color: #e8f0ff; color: #1e3a8a; font-weight: 700; }
+        input[type="text"], input[type="date"], input[type="number"], select, input[type="time"] { width: 100%; max-width: 460px; padding: 7px 9px; border: 1px solid #c5ccd6; border-radius: 6px; box-sizing: border-box; transition: border-color 0.3s, box-shadow 0.2s; background: #fff; font-family: inherit; white-space: normal; word-break: break-word; line-height: 1.3; min-height: 28px; }
+        input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus, input[type="time"]:focus, textarea:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+        input[type="date"], input[type="time"] { max-width: 220px; padding: 8px; }
+        textarea { width: 100%; min-height: 52px; padding: 8px 9px; border: 1px solid #c5ccd6; border-radius: 6px; box-sizing: border-box; resize: vertical; font-family: inherit; white-space: pre-wrap; word-break: break-word; line-height: 1.35; }
+        /* 禁用状态的样式 */
+        input[disabled], textarea[disabled], input[type="range"][disabled] {
+            cursor: not-allowed;
+            background-color: #f7f7f7 !important;
+            border-color: #e5e7eb !important;
+            color: #9ca3af;
+        }
+        input[type="range"][disabled]::-webkit-slider-thumb {
+            background: #aeb5c2 !important;
+            box-shadow: none !important;
+        }
+
+        ::placeholder { font-family: inherit; color: #9ca3af; opacity: 1; white-space: normal; word-break: break-word; line-height: 1.3; }
+        .mobile-hint { display: none; color: #6b7280; font-size: 0.9em; margin-top: 4px; }
+        .note { font-size: 0.9em; color: #5f6673; margin-top: 5px; display: block; }
+        .mindset { background-color: #dbeafe; border-left: 5px solid #1e3a8a; padding: 15px; margin-top: 20px; border-radius: 5px; }
+        .mindset p { margin: 5px 0; color: #1e3a8a; }
+        .mindset strong { font-size: 1.1em; }
+        .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 6px; }
+        .date-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+        .date-status { font-size: 0.9em; color: #374151; }
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; background-color: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95em; box-shadow: 0 3px 8px rgba(37, 99, 235, 0.25); transition: transform 0.1s ease, background-color 0.2s; }
+        .btn:hover { background-color: #1d4ed8; }
+        .btn:active { transform: translateY(1px); }
+        .btn:disabled { background-color: #9ca3af; cursor: not-allowed; box-shadow: none; transform: none; }
+        .btn.secondary { background-color: #6b7280; box-shadow: 0 3px 8px rgba(107, 114, 128, 0.25); }
+        .btn.secondary:hover { background-color: #4b5563; }
+        .btn.secondary:disabled { background-color: #9ca3af; }
+        .inline-hint { font-size: 0.9em; color: #4b5563; margin-top: 4px; }
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 10px; }
+        .metric { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; background: #f9fafb; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+        .metric-label { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #1e3a8a; }
+        .metric-body { font-size: 0.95em; color: #374151; margin: 6px 0 10px; }
+        .metric-score { max-width: 100%; }
+        .inline-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 4px 0; }
+        .inline-label { white-space: nowrap; font-weight: 600; color: #1e3a8a; }
+        .inline-row textarea, .inline-row input { flex: 1 1 0; min-width: 0; }
+        .btn.ghost { background: #eef2ff; color: #1e3a8a; box-shadow: none; }
+        .btn.ghost:hover { background: #dbeafe; }
+        .btn.ghost:disabled { background-color: #e5e7eb; color: #9ca3af; }
+        .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: rgba(31,41,55,0.9); color: #fff; padding: 10px 14px; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.18); font-size: 0.95em; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; z-index: 9999; }
+        .toast.show { opacity: 1; }
+        .last-save { font-size: 0.9em; color: #4b5563; margin-left: 8px; }
+        h4 { margin: 10px 0 6px; }
+        .note { margin-top: 2px; }
+        /* 评分滑块样式 - 仅保留 1 和 10 标签 */
+        .rating-labels { display: flex; justify-content: space-between; font-size: 0.9em; color: #6b7280; padding: 0 2px; margin-top: 2px; font-weight: bold; }
+        .rating-value { font-weight: 700; color: #1e3a8a; text-align: center; margin-top: 4px; font-size: 1.1em; }
+        input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: #e0e7ff; border-radius: 5px; transition: opacity .2s; cursor: pointer; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #4f8ef5; cursor: pointer; border: 2px solid #ffffff; box-shadow: 0 0 4px rgba(0, 0, 0, 0.15); }
+        input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #4f8ef5; cursor: pointer; border: 2px solid #ffffff; box-shadow: 0 0 4px rgba(0, 0, 0, 0.15); }
+        input[type="range"][disabled]::-webkit-slider-thumb { background: #aeb5c2 !important; }
+
+        /* 图表样式 */
+        #chart-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 140px; 
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 2px solid #e5e7eb;
+            position: relative; 
+            padding-left: 20px; 
+            box-sizing: content-box;
+        }
+        .chart-ref-line {
+            position: absolute;
+            left: 20px; 
+            width: calc(100% - 20px);
+            border-top: 1px dotted #d1d5db;
+        }
+        .ref-label {
+             position: absolute;
+             left: 0px;
+             font-size: 0.75em;
+             color: #6b7280;
+             line-height: 1;
+             transform: translateY(-50%); 
+             font-weight: 500;
+        }
+        .day-chart {
+            flex: 1 1 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            min-width: 30px;
+        }
+        .bar-group {
+            display: flex;
+            align-items: flex-end;
+            height: 100px; 
+            width: 100%;
+            justify-content: center;
+            gap: 2px;
+            position: relative; 
+        }
+        .chart-bar {
+            width: 45%;
+            transition: height 0.3s ease;
+            border-radius: 3px 3px 0 0;
+            opacity: 0.9;
+            min-height: 1px; 
+        }
+        .chart-bar-mood { background-color: #4f8ef5; } 
+        .chart-bar-energy { background-color: #10b981; } 
+        .chart-label {
+            font-size: 0.8em;
+            color: #6b7280;
+            margin-top: 5px;
+            text-align: center;
+        }
+        .score-label {
+            position: absolute;
+            text-align: center;
+            font-size: 0.75em; 
+            font-weight: bold;
+            transition: all 0.3s ease;
+            transform: translateY(-100%); 
+            line-height: 1;
+        }
+        .mood-label { 
+            left: 5%; 
+            width: 45%; 
+            color: #1e3a8a; 
+        }
+        .energy-label { 
+            left: 50%; 
+            width: 45%; 
+            color: #065f46; 
+        }
+
+        @media (max-width: 640px) {
+            .metrics { grid-template-columns: 1fr; }
+            .mobile-hint { display: block; }
+            #chart-container { padding-left: 15px; height: 120px; }
+            .chart-ref-line { left: 15px; width: calc(100% - 15px); }
+            .ref-label { left: 0px; }
+            .score-label { font-size: 0.7em; }
+        }
+    </style>
+</head>
+<body>
+
+    <h2>✨ 每日情绪与掌控感记录 (改进版) ✨</h2>
+
+    <div class="section mindset">
+        <h3>💡 记录心法：自我呵护指南</h3>
+        <p>1. 降低门槛：任何一点记录都比完全放弃要好。如果今天很累，只写下 A1/A2 评分 或 B1 最开心的事 即可。</p>
+        <p>2. 不带评判：记录的目的是“看见”（客观了解状态），而不是“审判”（指责自己）。请允许所有感受的存在。</p>
+        <p>3. 保持好奇：用观察者的心态去记录，去了解自己的规律和起伏。</p>
+    </div>
+
+    <div class="section">
+        <h3>📅 基本信息</h3>
+        <div class="date-row">
+            <strong>记录日期：</strong>
+            <input id="date" name="date" type="date" aria-label="记录日期">
+            <button class="btn secondary" id="prev-day" type="button">← 前一天</button>
+            <button class="btn secondary" id="next-day" type="button">后一天 →</button>
+            <button class="btn ghost" id="goto-today" type="button">回到今天</button>
+            <button class="btn ghost" id="clear-day" type="button">清空当前</button>
+            <span class="date-status" id="date-status"></span>
+            <span class="last-save" id="last-save"></span>
+        </div>
+        <div class="inline-hint">默认填入今天，切换日期即可查看/填写历史记录。</div>
+    </div>
+
+    <div class="section">
+        <h3>I. 状态量化与觉察 (滑块优化)</h3>
+        <div class="metrics">
+            <div class="metric">
+                <div class="metric-label">情绪评分 (1-10)</div>
+                <div class="metric-body">今晚回顾时的总体情绪，1=极度低落，10=极度兴奋。</div>
+                <div class="rating-value" id="mood-value">5</div>
+                <input type="range" min="1" max="10" step="1" value="5" class="metric-score" name="mood" id="mood-range" aria-label="情绪评分">
+                <div class="rating-labels">
+                    <span>1</span>
+                    <span>10</span>
+                </div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">能量评分 (1-10)</div>
+                <div class="metric-body">今晚回顾时的身体精力，1=疲惫无力，10=充满活力。</div>
+                <div class="rating-value" id="energy-value">5</div>
+                <input type="range" min="1" max="10" step="1" value="5" class="metric-score" name="energy" id="energy-range" aria-label="能量评分">
+                <div class="rating-labels">
+                    <span>1</span>
+                    <span>10</span>
+                </div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">睡眠记录 (原生时间输入)</div>
+                <div class="metric-body">记录昨晚的入睡与醒来时间。</div>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+                    <span>入睡：</span>
+                    <input type="time" name="sleepStart" aria-label="入睡时间">
+                    <span>醒来：</span>
+                    <input type="time" name="sleepEnd" aria-label="醒来时间">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>II. 积极捕捉与掌控 (行动聚焦)</h3>
+        <h4>B1. 今日最开心的三件事</h4>
+        <div class="note">（积极心理学练习：训练大脑寻找美好，越具体越好。）</div>
+        <div class="inline-row"><span class="inline-label">1.</span><textarea name="happy1" rows="2" placeholder="例如：阳光洒在身上很舒服" aria-label="最开心的事1"></textarea></div>
+        <div class="inline-row"><span class="inline-label">2.</span><textarea name="happy2" rows="2" placeholder="例如：喝到一杯好咖啡" aria-label="最开心的事2"></textarea></div>
+        <div class="inline-row"><span class="inline-label">3.</span><textarea name="happy3" rows="2" placeholder="例如：看到一个有趣的表情包" aria-label="最开心的事3"></textarea></div>
+
+        <h4>B2. 今日的掌控感与自爱行动</h4>
+        <div class="inline-row">
+            <span class="inline-label">完成的具体行动：</span>
+            <textarea name="action" rows="2" placeholder="例如：我为面试准备了 1 小时 / 我按时吃了午饭" aria-label="完成的具体行动"></textarea>
+        </div>
+        <div class="inline-row">
+            <span class="inline-label">今日的自爱行动：</span>
+            <textarea name="selflove" rows="2" placeholder="例如：我没有熬夜，11点前躺下 / 我给皮肤涂了乳液" aria-label="今日的自爱行动"></textarea>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>III. 觉察与反思 (深层探索)</h3>
+        <h4>C1. 情绪/压力触发点</h4>
+        <div class="note"><strong>⚠️ 重点：</strong> 如果情绪评分低于 5 分，请记录导致情绪下滑的事件、想法或身体感受。</div>
+        <textarea name="trigger" placeholder="例如：面试官的一个问题让我觉得自己能力很差，突然开始否定自己。" aria-label="情绪压力触发点"></textarea>
+
+        <h4>C2. 今日消费速览 (控制感辅助)</h4>
+        <p><strong>总额：</strong> ¥ <input name="spendTotal" type="number" step="0.01" min="0" placeholder="例如：128.5" aria-label="今日消费总额"></p>
+        <div class="inline-row">
+            <span class="inline-label">情绪性消费 (如果有)：</span>
+            <textarea name="spendEmo" placeholder="因焦虑/无聊而买的东西，例如：奶茶、零食" aria-label="情绪性消费" rows="2"></textarea>
+        </div>
+        <div class="inline-row">
+            <span class="inline-label">今日的“价值消费”：</span>
+            <textarea name="spendValue" placeholder="对未来或重要需求有帮助的消费，例如：面试正装、好书、在线课程" aria-label="价值消费" rows="2"></textarea>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>IV. 明日展望 (减少拖延)</h3>
+        <h4>D. 明天只需完成的 3 件小事</h4>
+        <div class="note">（只列出三件**必须完成**且**具体可执行**的小任务，避免过度压力。）</div>
+        <div class="inline-row"><span class="inline-label">1.</span><textarea name="todo1" rows="2" maxlength="120" placeholder="例如：发送简历到公司A" aria-label="明日任务1"></textarea></div>
+        <div class="inline-row"><span class="inline-label">2.</span><textarea name="todo2" rows="2" maxlength="120" placeholder="例如：给妈妈打电话" aria-label="明日任务2"></textarea></div>
+        <div class="inline-row"><span class="inline-label">3.</span><textarea name="todo3" rows="2" maxlength="120" placeholder="例如：洗干净昨天堆积的衣服" aria-label="明日任务3"></textarea></div>
+        <div class="inline-hint">建议写“动词 + 对象 + 时间/数量”，便于执行。</div>
+    </div>
+
+    <div class="section">
+        <h3>V. 数据总览 (最近 7 天评分趋势 - 柱状图)</h3>
+        <div class="note">图表展示最近 7 个**有记录日期**的情绪和能量趋势（日期从左到右，从旧到新）。</div>
+        <div id="chart-container">
+            </div>
+        <div class="note" style="margin-top: 15px;">情绪评分：蓝色柱 / 能量评分：绿色柱</div>
+    </div>
+
+    <div class="actions">
+        <button class="btn" id="export-md" type="button">📄 导出 Markdown</button>
+        <button class="btn secondary" id="export-txt" type="button">🧾 导出 TXT</button>
+        <button class="btn secondary" id="print-page" type="button">🖨️ 打印/另存为PDF</button>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script>
+        // --- 核心变量与初始化 ---
+        const fields = Array.from(document.querySelectorAll('input, textarea, select')).filter(el => el.name && el.name !== 'date');
+        const storageKey = 'daily-record-v2';
+        const dateInput = document.getElementById('date');
+        const dateStatus = document.getElementById('date-status');
+        const nextDayBtn = document.getElementById('next-day'); // 新增：后一天按钮
+        const clearDayBtn = document.getElementById('clear-day'); // 新增：清空按钮
+        const toastEl = document.getElementById('toast');
+        const lastSaveEl = document.getElementById('last-save');
+        let lastDate = '';
+        let toastTimer = null;
+        let debounceTimer = null;
+
+        // --- 辅助函数 ---
+        const showToast = (msg) => {
+            if (!toastEl) return;
+            toastEl.textContent = msg;
+            toastEl.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1400);
+        };
+
+        const readStore = () => {
+            try {
+                const cached = localStorage.getItem(storageKey);
+                return cached ? JSON.parse(cached) : {};
+            } catch (e) {
+                console.warn('读取缓存失败', e);
+                return {};
+            }
+        };
+
+        const writeStore = (data) => {
+            localStorage.setItem(storageKey, JSON.stringify(data));
+        };
+
+        const getCurrentDate = () => dateInput?.value || '';
+
+        const clearFields = () => fields.forEach(el => {
+            if (el.name === 'date') return;
+            if (el.type === 'range') {
+                el.value = '5';
+                updateRangeValue(el.id);
+            } else {
+                el.value = '';
+            }
+        });
+
+        const formatDate = (date) => {
+            const d = new Date(date);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        };
+
+        const updateRangeValue = (id) => {
+            const range = document.getElementById(id);
+            const valueDisplay = document.getElementById(id.replace('-range', '-value'));
+            if (range && valueDisplay) {
+                valueDisplay.textContent = range.value;
+            }
+        };
+
+        /**
+         * 检查日期是否是未来日期（大于今天）。
+         * @param {string} dateStr - 格式为 YYYY-MM-DD 的日期字符串
+         * @returns {boolean}
+         */
+        const isFutureDate = (dateStr) => {
+            if (!dateStr) return false;
+            const today = formatDate(new Date());
+            return dateStr > today;
+        };
+        
+        // --- 核心逻辑函数 ---
+        
+        /**
+         * 检查目标日期是否为未来，并根据结果禁用/启用输入字段和按钮
+         * @param {string} targetDate 
+         */
+        const checkFutureDateAndDisable = (targetDate) => {
+            const isFuture = isFutureDate(targetDate);
+            const isToday = targetDate === formatDate(new Date());
+            
+            // 1. 禁用/启用所有输入字段
+            fields.forEach(el => {
+                el.disabled = isFuture;
+            });
+
+            // 2. 禁用/启用导航按钮和清空按钮
+            if (nextDayBtn) {
+                // 如果是今天，禁用“后一天”按钮
+                nextDayBtn.disabled = isToday || isFuture;
+            }
+            if (clearDayBtn) {
+                // 未来日期也不能清空（因为它本身就是空的）
+                clearDayBtn.disabled = isFuture;
+            }
+
+            // 3. 更新状态提示
+            if (isFuture) {
+                dateStatus.innerHTML = `<span style="color: #ef4444; font-weight: bold;">未来日期：${targetDate}。无法填写。</span>`;
+                // 确保清空字段，未来日期无数据
+                clearFields();
+                if (lastSaveEl) lastSaveEl.textContent = '';
+                return true;
+            }
+            return false;
+        };
+
+
+        const loadData = (targetDate = getCurrentDate()) => {
+            if (dateInput) dateInput.value = targetDate;
+            
+            // 优先检查并处理未来日期
+            if (checkFutureDateAndDisable(targetDate)) {
+                generateSummaryChart(readStore());
+                return;
+            }
+
+            // 如果是今天或过去，加载数据
+            const store = readStore();
+            clearFields();
+            const data = store[targetDate] || {};
+            fields.forEach(el => {
+                if (data[el.name] !== undefined) {
+                    el.value = data[el.name];
+                    if (el.type === 'range') {
+                        updateRangeValue(el.id);
+                    }
+                }
+            });
+            updateStatus(targetDate, !!store[targetDate], data.updatedAt);
+            generateSummaryChart(store); 
+        };
+
+        const saveData = (targetDate = getCurrentDate(), silent = false) => {
+            if (!targetDate || isFutureDate(targetDate)) return; // 阻止保存未来日期
+
+            const store = readStore();
+            const payload = {};
+            fields.forEach(el => payload[el.name] = el.value);
+            payload.date = targetDate;
+            payload.updatedAt = Date.now();
+            store[targetDate] = payload;
+            writeStore(store);
+            updateStatus(targetDate, true, payload.updatedAt);
+            generateSummaryChart(store); 
+            if (!silent) showToast('已自动保存');
+        };
+
+        const handleDateChange = (newDate) => {
+            if (!newDate) return;
+            // 确保在切换日期前，当前日期的数据被保存 (同步静默保存)
+            saveData(lastDate || getCurrentDate(), true); 
+            lastDate = newDate;
+            loadData(newDate); 
+        };
+
+        const shiftDate = (delta) => {
+            const base = dateInput.value ? new Date(dateInput.value) : new Date();
+            base.setDate(base.getDate() + delta);
+            const next = formatDate(base);
+            handleDateChange(next);
+        };
+
+        const goToday = () => {
+            handleDateChange(formatDate(new Date()));
+        };
+
+        const clearCurrent = () => {
+            const current = getCurrentDate();
+            if (!current || isFutureDate(current)) return; // 阻止清空未来日期
+            
+            const store = readStore();
+            delete store[current];
+            writeStore(store);
+            clearFields();
+            updateStatus(current, false, undefined);
+            generateSummaryChart(store);
+            showToast('已清空当前日期');
+        };
+
+        const updateStatus = (date, hasData, updatedAt) => {
+            if (!dateStatus) return;
+            dateStatus.textContent = hasData ? `已加载：${date}` : `当前日期暂无记录：${date}`;
+            if (lastSaveEl) {
+                if (updatedAt) {
+                    const d = new Date(updatedAt);
+                    const hh = String(d.getHours()).padStart(2, '0');
+                    const mm = String(d.getMinutes()).padStart(2, '0');
+                    lastSaveEl.textContent = `最近保存：${hh}:${mm}`;
+                } else {
+                    lastSaveEl.textContent = '';
+                }
+            }
+        };
+
+        // --- 数据总览图表生成 (保持不变，已含标注) ---
+        const generateSummaryChart = (store) => {
+            const chartContainer = document.getElementById('chart-container');
+            if (!chartContainer) return;
+            const maxBarHeight = 100;
+
+            const allDates = Object.keys(store).filter(d => d);
+            allDates.sort((a, b) => new Date(a) - new Date(b));
+            const last7Days = allDates.slice(-7); 
+
+            chartContainer.innerHTML = ''; 
+
+            if (last7Days.length === 0) {
+                chartContainer.innerHTML = '<div style="text-align: center; color: #6b7280; padding: 30px 0; width: 100%;">暂无最近的记录数据。</div>';
+                return;
+            }
+
+            const refLines = [
+                { score: 10, label: '10' },
+                { score: 5, label: '5' }
+            ];
+            
+            refLines.forEach(ref => {
+                const refLine = document.createElement('div');
+                refLine.className = 'chart-ref-line';
+                refLine.style.bottom = `${(ref.score / 10) * maxBarHeight}px`; 
+
+                const refLabel = document.createElement('span');
+                refLabel.className = 'ref-label';
+                refLabel.textContent = ref.label;
+                refLabel.style.bottom = `${(ref.score / 10) * maxBarHeight}px`;
+
+                chartContainer.appendChild(refLine);
+                chartContainer.appendChild(refLabel);
+            });
+
+            last7Days.forEach(dateStr => {
+                const data = store[dateStr];
+                const moodScore = Math.min(10, Math.max(0, parseInt(data.mood, 10) || 0));
+                const energyScore = Math.min(10, Math.max(0, parseInt(data.energy, 10) || 0));
+                const dateLabel = dateStr.substring(5); 
+
+                const dayChart = document.createElement('div');
+                dayChart.className = 'day-chart';
+
+                const barGroup = document.createElement('div');
+                barGroup.className = 'bar-group';
+
+                const moodHeight = moodScore * 10; 
+                const moodBar = document.createElement('div');
+                moodBar.className = 'chart-bar chart-bar-mood';
+                moodBar.style.height = `${moodHeight}px`;
+                
+                const energyHeight = energyScore * 10;
+                const energyBar = document.createElement('div');
+                energyBar.className = 'chart-bar chart-bar-energy';
+                energyBar.style.height = `${energyHeight}px`;
+
+                if (moodScore > 0) { 
+                    const moodLabel = document.createElement('div');
+                    moodLabel.className = 'score-label mood-label';
+                    moodLabel.textContent = moodScore;
+                    moodLabel.style.bottom = `${moodHeight}px`; 
+                    barGroup.appendChild(moodLabel);
+                }
+
+                if (energyScore > 0) {
+                    const energyLabel = document.createElement('div');
+                    energyLabel.className = 'score-label energy-label';
+                    energyLabel.textContent = energyScore;
+                    energyLabel.style.bottom = `${energyHeight}px`;
+                    barGroup.appendChild(energyLabel);
+                }
+                
+                barGroup.appendChild(moodBar);
+                barGroup.appendChild(energyBar);
+
+                const label = document.createElement('div');
+                label.className = 'chart-label';
+                label.textContent = dateLabel;
+
+                dayChart.appendChild(barGroup);
+                dayChart.appendChild(label);
+                chartContainer.appendChild(dayChart);
+            });
+        };
+        
+        // --- 导出逻辑 (保持不变) ---
+        const downloadFile = (filename, content) => {
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        const toMarkdown = () => {
+            const get = name => document.querySelector(`[name="${name}"]`)?.value || '';
+            const dateStr = get('date') || '未填日期';
+            const lines = [
+                `# 每日情绪与掌控感记录`,
+                `- 日期: ${dateStr}`,
+                `- 情绪评分: ${get('mood')}`,
+                `- 能量评分: ${get('energy')}`,
+                `- 睡眠: ${get('sleepStart')} - ${get('sleepEnd')}`,
+                ``,
+                `## 今日最开心的三件事`,
+                `1. ${get('happy1')}`,
+                `2. ${get('happy2')}`,
+                `3. ${get('happy3')}`,
+                ``,
+                `## 掌控感与自爱行动`,
+                `- 完成的行动: ${get('action')}`,
+                `- 自爱行动: ${get('selflove')}`,
+                ``,
+                `## 情绪/压力触发点`,
+                `${get('trigger')}`,
+                ``,
+                `## 消费速览`,
+                `- 总额: ${get('spendTotal')}`,
+                `- 情绪性消费: ${get('spendEmo')}`,
+                `- 价值消费: ${get('spendValue')}`,
+                ``,
+                `## 明天三件小事`,
+                `1. ${get('todo1')}`,
+                `2. ${get('todo2')}`,
+                `3. ${get('todo3')}`
+            ];
+            downloadFile(`daily-record-${dateStr}.md`, lines.join('\n'));
+        };
+
+        const toTXT = () => {
+            const get = name => document.querySelector(`[name="${name}"]`)?.value || '';
+            const dateStr = get('date') || '未填日期';
+            const lines = [
+                `日期: ${dateStr}`,
+                `情绪评分: ${get('mood')}`,
+                `能量评分: ${get('energy')}`,
+                `睡眠: ${get('sleepStart')} - ${get('sleepEnd')}`,
+                ``,
+                `最开心的三件事:`,
+                `1) ${get('happy1')}`,
+                `2) ${get('happy2')}`,
+                `3) ${get('happy3')}`,
+                ``,
+                `完成的具体行动: ${get('action')}`,
+                `自爱行动: ${get('selflove')}`,
+                ``,
+                `情绪/压力触发点:`,
+                `${get('trigger')}`,
+                ``,
+                `消费速览:`,
+                `总额: ${get('spendTotal')}`,
+                `情绪性消费: ${get('spendEmo')}`,
+                `价值消费: ${get('spendValue')}`,
+                ``,
+                `明天三件小事:`,
+                `1) ${get('todo1')}`,
+                `2) ${get('todo2')}`,
+                `3) ${get('todo3')}`
+            ];
+            downloadFile(`daily-record-${dateStr}.txt`, lines.join('\n'));
+        };
+
+        // --- 初始化函数 ---
+        const init = () => {
+            const today = formatDate(new Date());
+            if (!dateInput.value) {
+                dateInput.value = today;
+            }
+            
+            // 迁移旧数据（如果存在）
+            if (!localStorage.getItem(storageKey) && localStorage.getItem('daily-record-v1')) {
+                try {
+                    const legacyData = JSON.parse(localStorage.getItem('daily-record-v1'));
+                    writeStore({ [today]: { ...legacyData, date: today } });
+                    localStorage.removeItem('daily-record-v1');
+                } catch (e) {
+                    console.warn('迁移旧数据失败', e);
+                }
+            }
+
+            // 初始化滑块数值显示
+            updateRangeValue('mood-range');
+            updateRangeValue('energy-range');
+
+            // 加载初始数据
+            lastDate = getCurrentDate();
+            loadData(lastDate);
+
+            // 监听事件
+            fields.forEach(el => el.addEventListener('input', (e) => {
+                if (e.target.type === 'range') {
+                    updateRangeValue(e.target.id);
+                }
+                
+                // 如果是未来日期，则不允许保存
+                if (isFutureDate(getCurrentDate())) return; 
+                
+                // 立即静默保存，并设置防抖保存
+                saveData(getCurrentDate(), true);
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => saveData(getCurrentDate(), false), 1200);
+            }));
+            
+            ['change', 'input'].forEach(evt => {
+                dateInput.addEventListener(evt, (e) => handleDateChange(e.target.value));
+            });
+
+            document.getElementById('prev-day').addEventListener('click', () => shiftDate(-1));
+            document.getElementById('next-day').addEventListener('click', () => shiftDate(1));
+            document.getElementById('goto-today').addEventListener('click', goToday);
+            document.getElementById('clear-day').addEventListener('click', clearCurrent);
+            document.getElementById('export-md').addEventListener('click', toMarkdown);
+            document.getElementById('export-txt').addEventListener('click', toTXT);
+            document.getElementById('print-page').addEventListener('click', () => window.print());
+
+            // 初始生成数据总览
+            generateSummaryChart(readStore());
+        };
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
