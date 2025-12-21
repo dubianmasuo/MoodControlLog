@@ -662,6 +662,20 @@
             updateStatus(targetDate, hasData, data.updatedAt);
             generateSummaryChart(store);
             renderCalendar(currentMonth, store);
+            document.querySelectorAll('textarea').forEach(ta => {
+                const countEl = document.querySelector(`.char-count[data-target="${ta.name}"]`);
+                if (!countEl) return;
+                if (ta.hasAttribute('maxlength')) {
+                    const len = ta.value.length;
+                    const max = parseInt(ta.getAttribute('maxlength'));
+                    countEl.textContent = `${len} / ${max}`;
+                    countEl.style.color = len > max * 0.9 ? '#dc2626' : '#6b7280';
+                } else {
+                    const lines = ta.value.split('\n').filter(l => l.trim() !== '').length;
+                    countEl.textContent = `${lines} 行`;
+                }
+            });
+            // ===== 新增代码结束 =====
         };
 
         const saveData = (targetDate = getCurrentDate(), silent = false) => {
