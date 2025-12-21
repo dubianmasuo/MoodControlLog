@@ -655,9 +655,9 @@
                     if (el.type === 'range') updateRangeValue(el.id);
                 }
             });
-            // 恢复触摸状态（仅当值 ≠ 5）
-            if (data.mood && data.mood !== '5') moodTouched = true;
-            if (data.energy && data.energy !== '5') energyTouched = true;
+            // 恢复触摸状态：只要有值，就假设已触摸（防止默认5被误判无效）
+            if (data.mood !== undefined) moodTouched = true;
+            if (data.energy !== undefined) energyTouched = true;
             const hasData = !!store[targetDate] && isRecordSignificant(store[targetDate]);
             updateStatus(targetDate, hasData, data.updatedAt);
             generateSummaryChart(store);
@@ -683,14 +683,7 @@
                 } else if (!silent) {
                     showToast('已自动保存');
                 }
-            } else {
-                if (store[targetDate]) {
-                    delete store[targetDate];
-                    writeStore(store);
-                    updateStatus(targetDate, false, undefined);
-                    if (!silent) showToast('已清空（无有效记录）');
-                }
-            }
+            } // 移除 else 部分：不再自动删除，只在有效时保存，否则什么都不做
             generateSummaryChart(store);
             renderCalendar(currentMonth, store);
         };
@@ -775,7 +768,8 @@
                     const td = ev.currentTarget.getAttribute('data-date');
                     if (td && !ev.currentTarget.classList.contains('empty-day')) {
                         handleDateChange(td);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        // 删除或注释这行：不再强制滚动到顶部
+                        // window.scrollTo({ top: 0, behavior: 'smooth' });
                     }
                 });
                 grid.appendChild(cell);
@@ -1062,10 +1056,11 @@
                             const label = fieldMap[key] || '';
                             const idx = headers.indexOf(label);
                             if (idx >= 0 && values[idx] !== undefined && values[idx] !== '') {
-                                let value = values[idx];
-                                // 特殊处理：只有入睡和醒来时间才补零
+                                let value = values[idx].trim(); // 新增：trim去空格
+                                // 特殊处理：时间补零，并验证格式
                                 if (key === 'sleepStart' || key === 'sleepEnd') {
                                     value = padTime(value);
+                                    if (!/^\d{2}:\d{2}$/.test(value)) value = ''; // 新增：无效时间清空，防止坏数据
                                 }
                                 record[key] = value;
                             } else if (FIELDS_CONFIG[key].default) {
@@ -1074,9 +1069,8 @@
                                 record[key] = '';
                             }
                         }
-
                         record.updatedAt = Date.now();
-                        if (isRecordSignificant(record)) {
+                        if (isRecordSignificant(record) && normalizedDate && !isFutureDate(normalizedDate)) { // 新增：再验证日期有效
                             newData[normalizedDate] = record;
                         }
                     }
@@ -1104,7 +1098,15 @@
                 writeStore(store);
                 generateSummaryChart(store);
                 renderCalendar(currentMonth, store);
-                loadData(getCurrentDate());
+                // 新增：跳转到最后导入的日期，显示数据
+                const importedDates = Object.keys(newData).sort();
+                if (importedDates.length > 0) {
+                    const lastImported = importedDates[importedDates.length - 1];
+                    dateInput.value = lastImported;
+                    loadData(lastImported); // 加载最后一天，显示数据（如果历史，会锁定）
+                } else {
+                    loadData(getCurrentDate());
+                }
                 showToast(`成功导入 ${Object.keys(newData).length} 天记录`);
             };
             reader.readAsText(file, 'UTF-8');
