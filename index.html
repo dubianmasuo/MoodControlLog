@@ -989,28 +989,95 @@
                     }
                 } else {
                     const lines = text.split(/\r?\n/);
-                    if (lines.length < 2) { showToast('CSV 格式错误'); return; }
+                    if (lines.length < 2) {
+                        showToast('CSV 格式错误');
+                        return;
+                    }
                     const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
                     const dateIndex = headers.indexOf('日期');
-                    if (dateIndex === -1) { showToast('CSV 缺少“日期”列'); return; }
+                    if (dateIndex === -1) {
+                        showToast('CSV 缺少“日期”列');
+                        return;
+                    }
                     for (let i = 1; i < lines.length; i++) {
                         if (!lines[i].trim()) continue;
-                        const values = lines[i].split(',').map(v => {
-                            v = v.trim();
-                            if (v.startsWith('"') && v.endsWith('"')) v = v.slice(1, -1).replace(/""/g, '"');
-                            return v;
-                        });
-                        const date = values[dateIndex];
-                        if (!date || isFutureDate(date)) continue;
-                        const record = {};
-                        for (const key in FIELDS_CONFIG) {
-                            const label = getFieldLabel(key);
-                            const idx = headers.indexOf(label);
-                            record[key] = (idx >= 0 && values[idx]) ? values[idx] : FIELDS_CONFIG[key].default || '';
+
+                        // 改进的 CSV 解析（支持字段内有逗号的情况）
+                        let values = lines[i].split(',');
+                        if (values.length !== headers.length) {
+                            values = lines[i].match(/(?:[^,"]|"[^"]*")+/g) || [];
+                            values = values.map(v => v.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+                        } else {
+                            values = values.map(v => {
+                                v = v.trim();
+                                if (v.startsWith('"') && v.endsWith('"')) {
+                                    v = v.slice(1, -1).replace(/""/g, '"');
+                                }
+                                return v;
+                            });
                         }
+                        if (values.length !== headers.length) {
+                            showToast(`第${i + 1}行格式错误，已跳过`);
+                            continue;
+                        }
+
+                        let date = values[dateIndex];
+                        const normalizedDate = date.replace(/\//g, '-'); // 把 2025/12/20 转为 2025-12-20
+                        if (!normalizedDate || isFutureDate(normalizedDate)) continue;
+
+                        const record = {};
+
+                        // 新增：补零函数，把 2:08 变成 02:08，让时间输入框能识别
+                        const padTime = (timeStr) => {
+                            if (!timeStr || timeStr.trim() === '') return '';
+                            const parts = timeStr.trim().split(':');
+                            if (parts.length !== 2) return timeStr; // 如果格式不对，原样返回
+                            const hh = parts[0].padStart(2, '0');  // 小时补零
+                            const mm = parts[1].padStart(2, '0');  // 分钟补零（保险起见）
+                            return `${hh}:${mm}`;
+                        };
+
+                        // 硬编码字段映射（解决 getFieldLabel 缺失的问题）
+                        const fieldMap = {
+                            'mood': '情绪评分',
+                            'energy': '能量评分',
+                            'sleepStart': '入睡时间',
+                            'sleepEnd': '醒来时间',
+                            'happy1': '最开心1',
+                            'happy2': '最开心2',
+                            'happy3': '最开心3',
+                            'action': '今日掌控感',
+                            'selflove': '今日自爱行动',
+                            'trigger': '情绪触发点',
+                            'rescue': '自救行为',
+                            'spendTotal': '消费总额',
+                            'spendEmo': '情绪性消费',
+                            'spendValue': '投资性消费',
+                            'todo1': '明天任务1',
+                            'todo2': '明天任务2',
+                            'todo3': '明天任务3'
+                        };
+
+                        for (const key in FIELDS_CONFIG) {
+                            const label = fieldMap[key] || '';
+                            const idx = headers.indexOf(label);
+                            if (idx >= 0 && values[idx] !== undefined && values[idx] !== '') {
+                                let value = values[idx];
+                                // 特殊处理：只有入睡和醒来时间才补零
+                                if (key === 'sleepStart' || key === 'sleepEnd') {
+                                    value = padTime(value);
+                                }
+                                record[key] = value;
+                            } else if (FIELDS_CONFIG[key].default) {
+                                record[key] = FIELDS_CONFIG[key].default;
+                            } else {
+                                record[key] = '';
+                            }
+                        }
+
                         record.updatedAt = Date.now();
                         if (isRecordSignificant(record)) {
-                            newData[date] = record;
+                            newData[normalizedDate] = record;
                         }
                     }
                 }
