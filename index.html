@@ -443,8 +443,24 @@
             toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1600);
         };
 
+        // 安全的日期解析函数：将 YYYY-MM-DD 字符串解析为本地日期对象
+        const parseLocalDate = (dateStr) => {
+            if (!dateStr) return new Date();
+            // 如果是日期字符串格式 YYYY-MM-DD，直接解析为本地时间
+            if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                const parts = dateStr.split('-');
+                // 使用本地时间创建日期对象，避免时区问题
+                return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            }
+            // 如果是其他格式，使用标准解析
+            const d = new Date(dateStr);
+            // 如果解析失败，返回当前日期
+            if (isNaN(d.getTime())) return new Date();
+            return d;
+        };
+
         const formatDate = (date) => {
-            const d = new Date(date);
+            const d = typeof date === 'string' ? parseLocalDate(date) : (date || new Date());
             // 直接使用本地时间的年月日，避免时区计算错误
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         };
@@ -646,18 +662,27 @@
                 return;
             }
             const store = readStore();
+            // 先清空所有字段和触摸状态
             clearFields();
+            // 重置触摸状态（clearFields 已经做了，但为了确保）
+            moodTouched = false;
+            energyTouched = false;
+            
             const data = store[targetDate] || {};
-            fields.forEach(el => {
-                if (data[el.name] !== undefined) {
-                    el.value = data[el.name];
-                    if (el.type === 'range') updateRangeValue(el.id);
-                }
-            });
-            // 恢复触摸状态：只要有值，就假设已触摸（防止默认5被误判无效）
-            if (data.mood !== undefined) moodTouched = true;
-            if (data.energy !== undefined) energyTouched = true;
-            const hasData = !!store[targetDate] && isRecordSignificant(store[targetDate]);
+            // 只有当数据存在时才填充字段
+            if (data && Object.keys(data).length > 0) {
+                fields.forEach(el => {
+                    if (data[el.name] !== undefined && data[el.name] !== null && data[el.name] !== '') {
+                        el.value = data[el.name];
+                        if (el.type === 'range') updateRangeValue(el.id);
+                    }
+                });
+                // 恢复触摸状态：只要有值，就假设已触摸（防止默认5被误判无效）
+                if (data.mood !== undefined && data.mood !== '' && data.mood !== null) moodTouched = true;
+                if (data.energy !== undefined && data.energy !== '' && data.energy !== null) energyTouched = true;
+            }
+            // 使用 isRecordSignificantForDisplay 判断显示状态，避免依赖全局触摸状态
+            const hasData = !!store[targetDate] && isRecordSignificantForDisplay(store[targetDate]);
             updateStatus(targetDate, hasData, data.updatedAt);
             generateSummaryChart(store);
             renderCalendar(currentMonth, store);
@@ -678,13 +703,17 @@
         };
 
         const saveData = (targetDate = getCurrentDate(), silent = false) => {
+            // 确保 targetDate 有效，如果无效则使用当前输入框的值
+            if (!targetDate) targetDate = dateInput.value || getCurrentDate();
             if (!targetDate || isFutureDate(targetDate)) return;
+            
             const store = readStore();
             const payload = {};
             fields.forEach(el => {
                 if (!el.disabled && !el.readOnly) payload[el.name] = el.value;
             });
             if (isRecordSignificant(payload)) {
+                // 确保使用传入的 targetDate，而不是 getCurrentDate()（因为 dateInput.value 可能已经被更新）
                 payload.date = targetDate;
                 payload.updatedAt = Date.now();
                 store[targetDate] = payload;
@@ -706,13 +735,21 @@
         // ========== 日期导航 ==========
         const handleDateChange = (newDate) => {
             if (!newDate) return;
-            if (!fields[0].readOnly) saveData(lastDate || getCurrentDate(), true);
+            // 先保存当前日期的数据（如果有修改且未锁定）
+            // 注意：必须在 loadData 之前保存，因为 loadData 会立即更新 dateInput.value
+            const currentDate = dateInput.value || getCurrentDate();
+            if (currentDate && currentDate !== newDate && !fields[0].readOnly) {
+                // 确保保存到正确的日期，使用明确的日期参数
+                saveData(currentDate, true);
+            }
+            // 更新 lastDate 并加载新日期
             lastDate = newDate;
             loadData(newDate);
         };
 
         const shiftDate = (delta) => {
-            const base = dateInput.value ? new Date(dateInput.value.replace(/-/g, '/')) : new Date();
+            // 使用安全的日期解析函数，避免时区问题
+            const base = dateInput.value ? parseLocalDate(dateInput.value) : new Date();
             base.setDate(base.getDate() + delta);
             handleDateChange(formatDate(base));
         };
@@ -995,41 +1032,110 @@
                         return;
                     }
                 } else {
-                    const lines = text.split(/\r?\n/);
-                    if (lines.length < 2) {
+                    // 改进的CSV解析：正确处理字段内的换行符、逗号和引号
+                    const parseCSVLine = (line) => {
+                        const result = [];
+                        let current = '';
+                        let inQuotes = false;
+                        for (let i = 0; i < line.length; i++) {
+                            const char = line[i];
+                            if (char === '"') {
+                                if (inQuotes && line[i + 1] === '"') {
+                                    // 转义的引号
+                                    current += '"';
+                                    i++; // 跳过下一个引号
+                                } else {
+                                    // 切换引号状态
+                                    inQuotes = !inQuotes;
+                                }
+                            } else if (char === ',' && !inQuotes) {
+                                // 字段分隔符（不在引号内）
+                                result.push(current);
+                                current = '';
+                            } else {
+                                current += char;
+                            }
+                        }
+                        result.push(current); // 最后一个字段
+                        return result;
+                    };
+
+                    // 按行分割，但需要合并被引号包裹的跨行字段
+                    const rawLines = text.split(/\r?\n/);
+                    if (rawLines.length < 2) {
                         showToast('CSV 格式错误');
                         return;
                     }
-                    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+                    
+                    // 重新组合行：合并被引号包裹的跨行字段
+                    const lines = [];
+                    let currentLine = '';
+                    for (let i = 0; i < rawLines.length; i++) {
+                        currentLine += (i > 0 ? '\n' : '') + rawLines[i];
+                        // 检查引号是否配对（忽略转义的引号）
+                        const quoteCount = (currentLine.match(/"/g) || []).length;
+                        const escapedQuoteCount = (currentLine.match(/""/g) || []).length;
+                        if ((quoteCount - escapedQuoteCount * 2) % 2 === 0) {
+                            // 引号配对，这是一行完整的记录
+                            lines.push(currentLine);
+                            currentLine = '';
+                        }
+                    }
+                    if (currentLine.trim()) {
+                        // 处理最后一行（可能没有换行符）
+                        lines.push(currentLine);
+                    }
+
+                    // 解析表头
+                    const headerLine = parseCSVLine(lines[0]);
+                    const headers = headerLine.map(h => h.trim().replace(/^"|"$/g, ''));
                     const dateIndex = headers.indexOf('日期');
                     if (dateIndex === -1) {
-                        showToast('CSV 缺少“日期”列');
+                        showToast('CSV 缺少"日期"列');
                         return;
                     }
+                    
                     for (let i = 1; i < lines.length; i++) {
                         if (!lines[i].trim()) continue;
 
-                        // 改进的 CSV 解析（支持字段内有逗号的情况）
-                        let values = lines[i].split(',');
+                        // 使用改进的CSV解析函数
+                        let values = parseCSVLine(lines[i]);
+                        // 清理值：移除首尾引号并处理转义引号，但保留字段内的换行符
+                        values = values.map(v => {
+                            // 先处理转义的引号
+                            v = v.replace(/""/g, '"');
+                            // 移除首尾的引号（如果存在）
+                            if (v.startsWith('"') && v.endsWith('"')) {
+                                v = v.slice(1, -1);
+                            }
+                            // 注意：不在这里trim，保留字段内的换行符和空白
+                            return v;
+                        });
+                        
                         if (values.length !== headers.length) {
-                            values = lines[i].match(/(?:[^,"]|"[^"]*")+/g) || [];
-                            values = values.map(v => v.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
-                        } else {
-                            values = values.map(v => {
-                                v = v.trim();
-                                if (v.startsWith('"') && v.endsWith('"')) {
-                                    v = v.slice(1, -1).replace(/""/g, '"');
-                                }
-                                return v;
-                            });
-                        }
-                        if (values.length !== headers.length) {
-                            showToast(`第${i + 1}行格式错误，已跳过`);
+                            showToast(`第${i + 1}行字段数量不匹配（期望${headers.length}个，实际${values.length}个），已跳过`);
                             continue;
                         }
 
                         let date = values[dateIndex];
-                        const normalizedDate = date.replace(/\//g, '-'); // 把 2025/12/20 转为 2025-12-20
+                        if (!date || !date.trim()) continue; // 跳过空日期
+                        // 标准化日期格式：支持 2025/12/20、2025-12-20、2026-1-6 等格式，统一转为 YYYY-MM-DD
+                        let normalizedDate = date.trim().replace(/\//g, '-');
+                        // 处理单数字月份和日期：2026-1-6 -> 2026-01-06
+                        const dateParts = normalizedDate.split('-');
+                        if (dateParts.length === 3) {
+                            const year = dateParts[0].trim();
+                            const month = dateParts[1].trim().padStart(2, '0');
+                            const day = dateParts[2].trim().padStart(2, '0');
+                            // 验证日期格式：YYYY-MM-DD
+                            if (year.length === 4 && month.length === 2 && day.length === 2) {
+                                normalizedDate = `${year}-${month}-${day}`;
+                            } else {
+                                continue; // 日期格式不正确，跳过这一行
+                            }
+                        } else {
+                            continue; // 日期格式不正确，跳过这一行
+                        }
                         if (!normalizedDate || isFutureDate(normalizedDate)) continue;
 
                         const record = {};
@@ -1069,11 +1175,16 @@
                             const label = fieldMap[key] || '';
                             const idx = headers.indexOf(label);
                             if (idx >= 0 && values[idx] !== undefined && values[idx] !== '') {
-                                let value = values[idx].trim(); // 新增：trim去空格
-                                // 特殊处理：时间补零，并验证格式
+                                let value = values[idx];
+                                // 对于文本字段，保留换行符，只移除首尾空白（保留字段内的换行）
+                                // 对于时间字段，需要trim并补零
                                 if (key === 'sleepStart' || key === 'sleepEnd') {
+                                    value = value.trim();
                                     value = padTime(value);
-                                    if (!/^\d{2}:\d{2}$/.test(value)) value = ''; // 新增：无效时间清空，防止坏数据
+                                    if (!/^\d{2}:\d{2}$/.test(value)) value = ''; // 无效时间清空
+                                } else {
+                                    // 文本字段：只移除首尾空白，保留中间的换行符
+                                    value = value.replace(/^\s+|\s+$/g, '');
                                 }
                                 record[key] = value;
                             } else if (FIELDS_CONFIG[key].default) {
@@ -1083,7 +1194,10 @@
                             }
                         }
                         record.updatedAt = Date.now();
-                        if (isRecordSignificant(record) && normalizedDate && !isFutureDate(normalizedDate)) { // 新增：再验证日期有效
+                        record.date = normalizedDate; // 确保记录中包含日期字段
+                        // 导入时使用 isRecordSignificantForDisplay，不依赖全局触摸状态
+                        // 注意：导入时不需要检查触摸状态，只要有数据就导入
+                        if (isRecordSignificantForDisplay(record) && normalizedDate && !isFutureDate(normalizedDate)) {
                             newData[normalizedDate] = record;
                         }
                     }
