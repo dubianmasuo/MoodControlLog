@@ -445,9 +445,8 @@
 
         const formatDate = (date) => {
             const d = new Date(date);
-            const offset = d.getTimezoneOffset() * 60000;
-            const localDate = new Date(d.getTime() - offset);
-            return `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, '0')}-${String(localDate.getDate()).padStart(2, '0')}`;
+            // 直接使用本地时间的年月日，避免时区计算错误
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         };
 
         const isFutureDate = (dateStr) => dateStr > formatDate(new Date());
